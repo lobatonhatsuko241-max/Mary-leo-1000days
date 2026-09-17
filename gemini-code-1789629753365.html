@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mary & Leo | 1000 Days of Us 💖</title>
+    
+    <!-- GSAP (动画) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- ECharts (旅行地图) -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- Three.js (3D 粒子特效) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- MediaPipe (AI 手势识别) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
+    <style>
+        :root {
+            --cute-pink: #FFB7B2;
+            --cute-blue: #E2F0CB;
+            --cute-purple: #C7CEEA;
+            --text-main: #5c4b51;
+            --text-sub: #8c7a80;
+            --bg-gradient: linear-gradient(135deg, #fff0f5, #e0f7fa);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            font-family: "PingFang SC", "Comic Sans MS", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+            background: var(--bg-gradient);
+        }
+
+        /* ================= 页面切换框架 (修复层级穿透Bug) ================= */
+        .screen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease; 
+            z-index: 0;
+        }
+        .screen.active { 
+            opacity: 1; pointer-events: auto; z-index: 10;
+        }
+        .back-btn { 
+            position: absolute; top: 20px; right: 30px; z-index: 999; 
+            padding: 10px 20px; background: rgba(255,255,255,0.8); 
+            border: 2px solid #ffb7b2; border-radius: 20px; cursor: pointer; 
+            color: #ff8b94; font-weight: bold; backdrop-filter: blur(5px); transition: 0.3s; 
+        }
+        .back-btn:hover { background: #ff8b94; color: #fff; transform: scale(1.05); }
+
+        /* ================= 1. 浪漫入场界面 ================= */
+        #entrance-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 240, 245, 0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 1s ease;
+        }
+        .polaroid {
+            background: white; padding: 15px 15px 40px 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            transform: rotate(-3deg); cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 4px;
+        }
+        .polaroid:hover { transform: rotate(2deg) scale(1.05); }
+        .polaroid img { width: 280px; height: auto; border: 1px solid #eee; pointer-events: none; }
+        .polaroid-text { text-align: center; margin-top: 15px; font-weight: bold; color: var(--text-main); font-size: 1.2rem; }
+        .click-hint { margin-top: 40px; font-size: 1rem; color: #ff8b94; animation: pulse 1.5s infinite; font-weight: bold; }
+        
+        @keyframes pulse { 0% { opacity: 0.5; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.5; transform: scale(0.9); } }
+
+        /* ================= 导航大厅 (Home) ================= */
+        #home-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .home-title { font-size: 3rem; color: #ff8b94; text-shadow: 2px 2px 10px rgba(255,183,178,0.5); margin-bottom: 10px; }
+        .portal-container { display: flex; gap: 30px; margin-top: 40px; }
+        .portal-card { width: 220px; height: 300px; background: rgba(255,255,255,0.7); border-radius: 30px; border: 3px solid #fff; box-shadow: 0 15px 35px rgba(255,183,178,0.3); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); }
+        .portal-card:hover { transform: translateY(-15px) scale(1.05); border-color: #ffb7b2; background: rgba(255,255,255,0.9); }
+        .portal-icon { font-size: 4rem; margin-bottom: 20px; }
+        .portal-text { font-size: 1.2rem; font-weight: bold; color: var(--text-main); }
+
+        /* ================= Part 1: 旅行轨迹 (严格还原附件UI) ================= */
+        #ui-title {
+            position: absolute; top: 20px; left: 30px; z-index: 10; pointer-events: none;
+            background: rgba(255, 255, 255, 0.7); padding: 15px 25px;
+            border-radius: 20px; box-shadow: 0 8px 20px rgba(255, 183, 178, 0.3); border: 2px solid #fff;
+        }
+        .main-title { font-size: 1.8rem; font-weight: bold; color: #ff8b94; margin: 0; }
+        .sub-title { font-size: 1rem; color: var(--text-sub); margin-top: 5px; }
+
+        #map-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        #roadmap-container {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 1000px; z-index: 10;
+            background: rgba(255, 255, 255, 0.85); padding: 15px 20px;
+            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex; overflow-x: auto; gap: 15px; align-items: center;
+            border: 2px solid #ffdeeb; scroll-behavior: smooth;
+        }
+        #roadmap-container::-webkit-scrollbar { height: 6px; }
+        #roadmap-container::-webkit-scrollbar-thumb { background: #ffb7b2; border-radius: 3px; }
+        
+        .road-node { display: flex; flex-direction: column; align-items: center; min-width: 60px; opacity: 0.4; transition: 0.3s; }
+        .road-node.active { opacity: 1; transform: scale(1.1); }
+        .road-node.completed { opacity: 0.8; }
+        
+        .road-dot { width: 16px; height: 16px; border-radius: 50%; background: #ccc; margin-bottom: 5px; box-shadow: 0 0 0 3px #fff; }
+        .road-node.active .road-dot { background: #ff4c61; box-shadow: 0 0 10px #ff4c61; animation: pulse 1s infinite; }
+        .road-node.completed .road-dot { background: #4cd137; } 
+        .road-name { font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
+
+        #memory-card {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            width: 85%; max-width: 700px; max-height: 85vh; background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ffdeeb; border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(255, 139, 148, 0.3); z-index: 100;
+            display: none; opacity: 0; flex-direction: column; overflow: hidden;
+        }
+        .card-header { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: #fff0f5; }
+        .city-title { font-size: 2rem; color: #ff8b94; margin: 0; }
+        .close-btn { background: #ffb7b2; color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; }
+        .gallery-container { display: flex; overflow-x: auto; padding: 20px; gap: 15px; scroll-snap-type: x mandatory; }
+        .gallery-img { height: 35vh; border-radius: 15px; scroll-snap-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .memory-text { padding: 10px 30px 25px 30px; font-size: 1.1rem; line-height: 1.6; color: var(--text-main); text-align: center; }
+
+        #easter-egg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px;
+            border: 4px dashed #ffb7b2; text-align: center; z-index: 999; display: none;
+            box-shadow: 0 20px 50px rgba(255, 183, 178, 0.5);
+        }
+        #easter-egg h2 { color: #ff4c61; font-size: 2rem; margin-bottom: 10px;}
+        #easter-egg p { color: #8c7a80; font-size: 1.2rem; font-style: italic; }
+
+        .floating-heart {
+            position: absolute; font-size: 20px; pointer-events: none;
+            animation: floatUp 1s ease-out forwards; z-index: 50;
+        }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
+
+        /* 未来城市点击提示样式 */
+        .future-hint {
+            position: absolute; pointer-events: none; z-index: 200;
+            background: rgba(255, 255, 255, 0.9); color: #ff4c61;
+            padding: 8px 16px; border-radius: 20px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 76, 97, 0.2);
+            border: 2px solid #ffdeeb; font-size: 0.9rem;
+            transform: translate(-50%, -100%);
+        }
+
+        /* ================= Part 2: 倒数日 ================= */
+        #part2-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .countdown-container { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+        .cd-card { background: rgba(255,255,255,0.85); width: 280px; padding: 40px 20px; border-radius: 40px; text-align: center; border: 3px dashed #ffb7b2; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: relative; }
+        .cd-avatar { font-size: 4rem; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #fff0f5; border-radius: 50%; width: 80px; height: 80px; line-height: 80px; border: 3px solid #ffb7b2; }
+        .cd-title { font-size: 1.3rem; color: var(--text-main); margin-top: 30px; font-weight: bold; }
+        .cd-days { font-size: 3.5rem; font-weight: bold; color: #ff4c61; margin: 15px 0; font-family: 'Comic Sans MS', sans-serif; }
+        .cd-date { color: var(--text-sub); font-size: 0.9rem; }
+
+        /* ================= Part 3: 手势交互粒子 ================= */
+        #part3-screen { background: #050510; } 
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .gesture-hint { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 15px 30px; border-radius: 30px; backdrop-filter: blur(10px); font-size: 1.1rem; text-align: center; pointer-events: none; z-index: 10; }
+        #video-element { position: absolute; bottom: 20px; right: 20px; width: 160px; height: 120px; border-radius: 10px; border: 2px solid #ffb7b2; transform: scaleX(-1); opacity: 0.5; pointer-events: none; z-index: 10; }
+    </style>
+</head>
+<body>
+
+    <!-- 入场券 -->
+    <div id="entrance-screen">
+        <div class="polaroid" onclick="startJourney()">
+            <img src="底图.jpg" alt="Our Ticket">
+            <div class="polaroid-text">Ticket to Our Universe</div>
+        </div>
+        <div class="click-hint">点击照片，开启记忆之旅 ✨</div>
+    </div>
+
+    <!-- 首页大厅 -->
+    <div id="home-screen" class="screen">
+        <h1 class="home-title">Mary & Leo's Universe ✨</h1>
+        <p style="color: var(--text-main);">选择一个篇章开始探索</p>
+        <div class="portal-container">
+            <div class="portal-card" onclick="navTo('part1')">
+                <div class="portal-icon">🗺️</div>
+                <div class="portal-text">Part 1: 旅行轨迹</div>
+            </div>
+            <div class="portal-card" onclick="navTo('part2')">
+                <div class="portal-icon">⏳</div>
+                <div class="portal-text">Part 2: 纪念日倒数</div>
+            </div>
+            <div class="portal-card" onclick="navTo('part3')">
+                <div class="portal-icon">🪄</div>
+                <div class="portal-text">Part 3: 魔法粒子</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Part 1: 旅行轨迹 ================= -->
+    <div id="part1-screen" class="screen">
+        <button class="back-btn" onclick="navTo('home')">🏠 返回主页</button>
+        
+        <!-- 还原原版UI头 -->
+        <div id="ui-title">
+            <h1 class="main-title">Mary & Leo</h1>
+            <h2 class="sub-title">在一起的1000天</h2>
+            <p style="font-size:0.8rem; color:#888; margin-top:5px;">请按照底部的路线图，依次点亮城市</p>
+        </div>
+
+        <div id="map-container"></div>
+
+        <!-- 路线图 -->
+        <div id="roadmap-container"></div>
+
+        <!-- 记忆卡片 -->
+        <div id="memory-card">
+            <div class="card-header">
+                <h1 class="city-title" id="mem-city">城市</h1>
+                <button class="close-btn" onclick="closeMemory()">×</button>
+            </div>
+            <div class="gallery-container" id="mem-gallery"></div>
+            <div class="memory-text" id="mem-text"></div>
+        </div>
+
+        <!-- 隐藏彩蛋 -->
+        <div id="easter-egg">
+            <h2>🎉 1000 Days & Beyond!</h2>
+            <p>Thanks for exploring these memories.<br>More places loading…</p>
+        </div>
+    </div>
+
+    <!-- ================= Part 2: 纪念日倒数 ================= -->
+    <div id="part2-screen" class="screen">
+        <button class="back-btn" onclick="navTo('home')">🏠 返回主页</button>
+        <h1 style="color: #ff8b94; margin-bottom: 60px; font-size: 2.5rem;">Time With You 💖</h1>
+        <div class="countdown-container">
+            <div class="cd-card">
+                <div class="cd-avatar">👧🏻</div>
+                <div class="cd-title">小马的生日</div>
+                <div class="cd-days" id="cd-ma">--</div>
+                <div class="cd-date">11月19日</div>
+            </div>
+            <div class="cd-card">
+                <div class="cd-avatar">💖</div>
+                <div class="cd-title">我们的纪念日</div>
+                <div class="cd-days" id="cd-anniv">--</div>
+                <div class="cd-date">1月5日</div>
+            </div>
+            <div class="cd-card">
+                <div class="cd-avatar">👦🏻</div>
+                <div class="cd-title">刘总的生日</div>
+                <div class="cd-days" id="cd-leo">--</div>
+                <div class="cd-date">8月18日</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Part 3: 粒子魔法 ================= -->
+    <div id="part3-screen" class="screen">
+        <button class="back-btn" style="background: rgba(0,0,0,0.5); color: #fff; border-color: #fff;" onclick="navTo('home')">🏠 返回主页</button>
+        <div id="webgl-container"></div>
+        <video id="video-element" autoplay playsinline></video>
+        <div class="gesture-hint">
+            打开摄像头，对准镜头尝试：<br>
+            ☝️1根手指 | ✌️2根手指 | 🤟3根手指 | 🖐️张开手掌 | ✊握拳
+        </div>
+    </div>
+
+    <script>
+        /* ================= 页面路由控制 ================= */
+        function startJourney() {
+            const entrance = document.getElementById('entrance-screen');
+            gsap.to(entrance, {
+                opacity: 0, duration: 1, 
+                onComplete: () => {
+                    entrance.style.display = 'none';
+                    document.getElementById('home-screen').classList.add('active');
+                }
+            });
+        }
+
+        function navTo(targetId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(targetId + '-screen').classList.add('active');
+            
+            if(targetId === 'part1' && !window.mapInited) initMap();
+            if(targetId === 'part2') initCountdown();
+            if(targetId === 'part3' && !window.magicInited) initMagic();
+        }
+
+        /* ================= Part 1: 旅行地图逻辑 ================= */
+        const routeOrder = [
+            "成都", "都江堰", "海洋馆", "毕棚沟", "欢乐谷", "西安", "北京", 
+            "青城山", "划船", "杭州", "南京", "九寨沟", "上海", "云南", "贵州", "山西", "济南"
+        ];
+
+        // 坐标微调：使得成都附近的景点不会完全重叠，方便点
+        const memoriesData = {
+            "成都": { geo: [104.06, 30.65], img: ["1第一张照片.jpg", "1第一张照片02.jpg"], text: "故事开始的地方。这是我们旅行的第一张合影。" },
+            "都江堰": { geo: [103.62, 31.00], img: ["2都江堰01.jpg", "2都江堰02.jpg", "2都江堰03jpg.jpg"], text: "青城山下，微风正好，你也刚好。" },
+            "海洋馆": { geo: [104.09, 30.67], img: ["3海洋馆.jpg", "4海洋馆02.jpg", "5海洋馆03.jpg", "5海洋馆04.jpg", "5海洋馆05.jpg"], text: "蓝色的梦幻世界，鱼群在我们眼前游过。" },
+            "毕棚沟": { geo: [102.82, 31.22], img: ["6毕棚沟.jpg", "6毕棚沟03.jpg", "毕棚沟02.jpg"], text: "雪山、阳光，还有戴着墨镜可爱的你。" },
+            "欢乐谷": { geo: [104.03, 30.72], img: ["7欢乐谷.jpg", "7欢乐谷02.jpg"], text: "在游乐园里像个孩子一样开心。" },
+            "西安": { geo: [108.93, 34.34], img: ["8西安01.jpg", "9西安02.jpg", "9西安03.jpg", "9西安04.jpg"], text: "穿上汉服的你，如同穿越了千年时光。" },
+            "北京": { geo: [116.40, 39.90], img: ["10北京01.jpg", "10北京03.jpg", "11北京02.jpg", "11北京04.jpg", "11北京05.jpg", "11北京06.jpg", "19北京.jpg", "19北京03.jpg", "19北京023.jpg"], text: "魔法世界奇妙的一天，黄油啤酒留下了白胡子。" },
+            "青城山": { geo: [103.58, 30.85], img: ["12青城山01.jpg", "12青城山02.jpg", "12青城山03.jpg", "12青城山04.jpg"], text: "清幽的山林里，感受大自然的温柔。" },
+            "划船": { geo: [104.06, 30.61], img: ["13划船.jpg"], text: "波光粼粼的水面，我们一起划着小船看夕阳。" },
+            "杭州": { geo: [120.15, 30.28], img: ["14杭州01.jpg", "14杭州02.jpg", "14杭州03.jpg", "14杭州05.jpg"], text: "江南水乡的温婉，捏着脸庞的可爱瞬间。" },
+            "南京": { geo: [118.79, 32.06], img: ["15南京01.jpg", "15南京04.jpg", "16南京02.jpg"], text: "可爱的猩猩玩偶陪着我们走过金陵城。" },
+            "九寨沟": { geo: [103.92, 33.26], img: ["17九寨沟.jpg", "17九寨沟01.jpg", "17九寨沟02.jpg", "17九寨沟03.jpg"], text: "人间仙境，水色如玻璃般透明。" },
+            "上海": { geo: [121.47, 31.23], img: ["18上海.jpg", "18上海01.jpg", "18上海02.jpg", "18上海03.jpg"], text: "迪士尼的童话城堡前，满足了少女心。" },
+            "云南": { geo: [102.71, 25.04], img: ["20云南01.jpg", "21云南02.jpg", "21云南03.jpg", "21云南04.jpg", "21云南05.jpg"], text: "彩云之南，雪山下的拥抱。" },
+            "贵州": { geo: [106.71, 26.57], img: ["22贵州01.jpg", "22贵州02.jpg"], text: "壮观的大瀑布前，山水秘境中的清凉。" },
+            "山西": { geo: [112.53, 37.87], img: ["23山西01.jpg", "23山西02.jpg", "23山西03.jpg", "23山西04.jpg"], text: "厚重的历史建筑前，留下了我们的足迹。" },
+            "济南": { geo: [117.00, 36.65], img: ["24济南.jpg", "24济南01.jpg", "24济南02.jpg", "24济南03.jpg"], text: "泉城的夜色中，映着我们的笑容。" }
+        };
+
+
+        let currentStep = 0;
+        let mapChart = null;
+        let unlockedLines = [];
+
+        function initMap() {
+            window.mapInited = true;
+            
+            const roadmapEl = document.getElementById('roadmap-container');
+            roadmapEl.innerHTML = '';
+            routeOrder.forEach((city, index) => {
+                const node = document.createElement('div');
+                node.className = `road-node ${index === 0 ? 'active' : ''}`;
+                node.id = `node-${index}`;
+                node.innerHTML = `<div class="road-dot"></div><div class="road-name">${city}</div>`;
+                roadmapEl.appendChild(node);
+            });
+
+            fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
+                .then(response => response.json())
+                .then(geoJson => {
+                    echarts.registerMap('china', geoJson);
+                    mapChart = echarts.init(document.getElementById('map-container'));
+                    
+                    mapChart.getZr().on('click', function(params) {
+                        if (!params.target) spawnHeart(params.offsetX, params.offsetY);
+                    });
+
+                    updateMap();
+                });
+        }
+
+        function updateMap() {
+            const lockedData = [];
+            const activeData = [];
+            const visitedData = [];
+
+            routeOrder.forEach((city, index) => {
+                const geo = memoriesData[city].geo;
+                const dataPoint = { name: city, value: [geo[0], geo[1], index] };
+                
+                if (index < currentStep) visitedData.push(dataPoint);
+                else if (index === currentStep) activeData.push(dataPoint);
+                else lockedData.push(dataPoint);
+            });
+
+            const heartPath = 'path://M512 896C512 896 94.0288 565.9648 94.0288 298.6496 94.0288 116.5312 239.36 0 417.9968 0c108.9536 0 205.2096 55.7056 261.2736 142.0288h0.256v0.1536h0.1536C735.6928 55.7568 832.0512 0 941.056 0 1119.6416 0 1265.0496 116.5312 1265.0496 298.6496c0 267.3152-417.9968 597.3504-417.9968 597.3504z';
+
+            const option = {
+                geo: {
+                    map: 'china', roam: true, zoom: 1.2, center: [104.19, 35.61],
+                    itemStyle: { areaColor: '#f1f2f6', borderColor: '#ffb7b2', borderWidth: 1 }
+                },
+                series: [
+                    { type: 'scatter', coordinateSystem: 'geo', symbolSize: 8, itemStyle: { color: '#ccc' }, data: lockedData },
+                    { type: 'scatter', coordinateSystem: 'geo', symbol: heartPath, symbolSize: 15, itemStyle: { color: '#ff7675' }, data: visitedData },
+                    { type: 'effectScatter', coordinateSystem: 'geo', symbol: heartPath, symbolSize: 25, showEffectOn: 'render', rippleEffect: { brushType: 'stroke', scale: 4 }, itemStyle: { color: '#ff4c61', shadowBlur: 10, shadowColor: '#ff4c61' }, label: { show: true, formatter: '{b}', position: 'right', fontWeight: 'bold' }, data: activeData },
+                    { type: 'lines', coordinateSystem: 'geo', effect: { show: true, period: 4, trailLength: 0.5, color: '#ffb7b2', symbolSize: 4 }, lineStyle: { color: '#ff8b94', width: 2, opacity: 0.6, curveness: 0.2 }, data: unlockedLines }
+                ]
+            };
+
+            mapChart.setOption(option);
+            
+            mapChart.off('click');
+            mapChart.on('click', function (params) {
+                if(params.componentType === 'series') {
+                    const targetIndex = params.data.value[2];
+                    if(targetIndex === currentStep) {
+                        openMemory(routeOrder[targetIndex]);
+                    } else if (targetIndex > currentStep) {
+                        // 【修复】点击未来城市，展示可爱提示，不打断体验
+                        showFutureHint(params.event.event.clientX, params.event.event.clientY);
+                    } else {
+                        openMemory(routeOrder[targetIndex], true);
+                    }
+                }
+            });
+        }
+
+        // 未来城市点击提示特效
+        function showFutureHint(x, y) {
+            const hint = document.createElement('div');
+            hint.className = 'future-hint';
+            hint.innerHTML = '💖 未来我们一起探索';
+            hint.style.left = x + 'px';
+            hint.style.top = (y - 20) + 'px';
+            document.getElementById('part1-screen').appendChild(hint);
+            
+            gsap.to(hint, {
+                y: -40, opacity: 0, duration: 1.5, ease: "power1.out",
+                onComplete: () => hint.remove()
+            });
+        }
+
+        function openMemory(cityName, isReview = false) {
+            const data = memoriesData[cityName];
+            document.getElementById('mem-city').innerText = cityName;
+            document.getElementById('mem-text').innerText = data.text;
+            
+            const gallery = document.getElementById('mem-gallery');
+            gallery.innerHTML = '';
+            data.img.forEach(imgName => {
+                const imgEl = document.createElement('img');
+                imgEl.src = imgName; imgEl.className = 'gallery-img';
+                gallery.appendChild(imgEl);
+            });
+
+            const card = document.getElementById('memory-card');
+            card.style.display = 'flex';
+            gsap.fromTo(card, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.5, ease: "back.out" });
+
+            if(!isReview && currentStep < routeOrder.length) {
+                const prevNode = document.getElementById(`node-${currentStep}`);
+                prevNode.classList.remove('active');
+                prevNode.classList.add('completed');
+                
+                if (currentStep > 0) {
+                    const prevCity = routeOrder[currentStep - 1];
+                    unlockedLines.push({ coords: [memoriesData[prevCity].geo, data.geo] });
+                }
+                currentStep++;
+                
+                if(currentStep < routeOrder.length) {
+                    const nextNode = document.getElementById(`node-${currentStep}`);
+                    nextNode.classList.add('active');
+                    nextNode.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+        }
+
+        function closeMemory() {
+            const card = document.getElementById('memory-card');
+            gsap.to(card, { opacity: 0, scale: 0.8, duration: 0.3, onComplete: () => { 
+                card.style.display = 'none'; 
+                updateMap(); 
+                if(currentStep === routeOrder.length) triggerEasterEgg();
+            }});
+        }
+
+        function spawnHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart';
+            heart.innerText = '💖';
+            heart.style.left = (x - 10) + 'px';
+            heart.style.top = (y - 10) + 'px';
+            document.getElementById('part1-screen').appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+        }
+
+        function triggerEasterEgg() {
+            document.getElementById('easter-egg').style.display = 'block';
+            gsap.from("#easter-egg", { scale: 0, rotation: 360, duration: 1, ease: "back.out(1.5)" });
+            for(let i=0; i<30; i++) {
+                setTimeout(() => spawnHeart(Math.random() * window.innerWidth, Math.random() * window.innerHeight), i * 150);
+            }
+        }
+
+        /* ================= Part 2: 倒数日计算 ================= */
+        function initCountdown() {
+            const today = new Date();
+            const getDays = (month, day) => {
+                let target = new Date(today.getFullYear(), month - 1, day);
+                if (today.getTime() > target.getTime()) target.setFullYear(target.getFullYear() + 1); 
+                return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+            };
+            document.getElementById('cd-ma').innerText = getDays(11, 19) + " 天";
+            document.getElementById('cd-anniv').innerText = getDays(1, 5) + " 天";
+            document.getElementById('cd-leo').innerText = getDays(8, 18) + " 天";
+        }
+
+        /* ================= Part 3: 3D 粒子魔法 ================= */
+        const touchPhotos = [
+            '触动/image_3a00c5.jpg',
+            '触动/拥抱.jpg',
+            '触动/戒指.jpg'
+        ];
+
+        let scene, camera, renderer, textParticles, photoSprites = [];
+        let targetPositions = []; 
+        const PARTICLE_COUNT = 2000;
+        
+        function initMagic() {
+            window.magicInited = true;
+            const container = document.getElementById('webgl-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.z = 250;
+            
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(PARTICLE_COUNT * 3);
+            for(let i=0; i<PARTICLE_COUNT*3; i++) {
+                positions[i] = (Math.random() - 0.5) * 400; 
+                targetPositions.push(positions[i]); 
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const material = new THREE.PointsMaterial({ 
+                color: 0xffe6f0, size: 2, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending 
+            });
+            textParticles = new THREE.Points(geometry, material);
+            scene.add(textParticles);
+
+            const snowGeo = new THREE.BufferGeometry();
+            const snowPos = new Float32Array(500 * 3);
+            for(let i=0; i<1500; i++) { snowPos[i] = (Math.random() - 0.5) * 600; }
+            snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+            const snowMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.5, transparent: true, opacity: 0.3 });
+            const snowParticles = new THREE.Points(snowGeo, snowMat);
+            scene.add(snowParticles);
+
+            const textureLoader = new THREE.TextureLoader();
+            touchPhotos.forEach(imgPath => {
+                textureLoader.load(imgPath, (texture) => {
+                    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0 }); 
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(30, 30, 1);
+                    sprite.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*200, (Math.random()-0.5)*100);
+                    sprite.userData.targetPos = sprite.position.clone(); 
+                    sprite.userData.targetOpacity = 0;
+                    scene.add(sprite);
+                    photoSprites.push(sprite);
+                });
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const positions = textParticles.geometry.attributes.position.array;
+                for(let i=0; i<PARTICLE_COUNT*3; i++) positions[i] += (targetPositions[i] - positions[i]) * 0.05; 
+                textParticles.geometry.attributes.position.needsUpdate = true;
+                textParticles.rotation.y = Math.sin(Date.now() * 0.0005) * 0.2; 
+
+                const sPos = snowParticles.geometry.attributes.position.array;
+                for(let i=1; i<1500; i+=3) {
+                    sPos[i] -= 0.2;
+                    if(sPos[i] < -300) sPos[i] = 300;
+                }
+                snowParticles.geometry.attributes.position.needsUpdate = true;
+
+                photoSprites.forEach(sprite => {
+                    sprite.position.lerp(sprite.userData.targetPos, 0.04);
+                    sprite.material.opacity += (sprite.userData.targetOpacity - sprite.material.opacity) * 0.05;
+                });
+                renderer.render(scene, camera);
+            }
+            animate();
+            startMediaPipe();
+        }
+
+        function getCoordinatesForText(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 600; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black'; ctx.fillRect(0, 0, 600, 200);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 80px "Comic Sans MS"';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 300, 100);
+            
+            const data = ctx.getImageData(0, 0, 600, 200).data;
+            let points = [];
+            for(let y = 0; y < 200; y+=3) {
+                for(let x = 0; x < 600; x+=3) {
+                    if(data[(y * 600 + x) * 4] > 128) points.push({ x: (x - 300)*0.5, y: -(y - 100)*0.5, z: (Math.random()-0.5)*10 });
+                }
+            }
+            let finalCoords = new Float32Array(PARTICLE_COUNT * 3);
+            for(let i=0; i<PARTICLE_COUNT; i++) {
+                let p = points[i % points.length];
+                finalCoords[i*3] = p.x; finalCoords[i*3+1] = p.y; finalCoords[i*3+2] = p.z;
+            }
+            return finalCoords;
+        }
+
+        function getRandomCoordinates() {
+            let finalCoords = new Float32Array(PARTICLE_COUNT * 3);
+            for(let i=0; i<PARTICLE_COUNT*3; i++) finalCoords[i] = (Math.random() - 0.5) * 400; 
+            return finalCoords;
+        }
+        function getHeartCoordinates() {
+            let finalCoords = new Float32Array(PARTICLE_COUNT * 3);
+            for(let i = 0; i < PARTICLE_COUNT; i++) {
+                let t = Math.random() * Math.PI * 2;
+                // r 用于让一部分粒子填充在爱心内部，一部分在边缘，形成带体积感的爱心
+                let r = Math.random() > 0.5 ? Math.sqrt(Math.random()) : 1; 
+                let x = 16 * Math.pow(Math.sin(t), 3);
+                let y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                
+                finalCoords[i*3] = x * 7 * r;
+                finalCoords[i*3+1] = y * 7 * r;
+                finalCoords[i*3+2] = (Math.random() - 0.5) * 30; // Z轴增加厚度
+            }
+            return finalCoords;
+        }
+
+        let currentGesture = '';
+
+        function startMediaPipe() {
+            const videoElement = document.getElementById('video-element');
+            const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+            
+            hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+            hands.onResults(onResults);
+            const cameraUtils = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 320, height: 240 });
+            cameraUtils.start();
+        }
+
+        function onResults(results) {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                const isFingerUp = (tipIndex, pipIndex) => landmarks[tipIndex].y < landmarks[pipIndex].y;
+                let extended = { thumb: landmarks[4].x < landmarks[3].x, index: isFingerUp(8, 6), middle: isFingerUp(12, 10), ring: isFingerUp(16, 14), pinky: isFingerUp(20, 18) };
+                let fingerCount = Object.values(extended).filter(v => v).length;
+                let newGesture = '';
+
+                if (fingerCount === 0) newGesture = 'fist';
+                else if (fingerCount === 5) newGesture = 'palm';
+                else if (extended.index && fingerCount === 1) newGesture = '1';
+                else if (extended.index && extended.middle && fingerCount === 2) newGesture = '2';
+                else if (extended.thumb && extended.index && extended.middle && fingerCount === 3) newGesture = '3';
+
+                if(newGesture && newGesture !== currentGesture) { currentGesture = newGesture; triggerGestureAnimation(currentGesture); }
+            }
+        }
+
+        function triggerGestureAnimation(gesture) {
+            photoSprites.forEach(s => s.userData.targetOpacity = 0);
+
+            if (gesture === '1') {
+                targetPositions = getCoordinatesForText("1000 days");
+            } else if (gesture === '2') {
+                targetPositions = getCoordinatesForText("you & me");
+            } else if (gesture === '3') {
+                targetPositions = getCoordinatesForText("hoping 3 yrs");
+            } else if (gesture === 'palm') {
+                targetPositions = getRandomCoordinates();
+                photoSprites.forEach(sprite => { 
+                    sprite.userData.targetOpacity = 1; 
+                    // 散开的范围稍微加大，更有失重漂浮感
+                    sprite.userData.targetPos = new THREE.Vector3((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 150, Math.random() * 50); 
+                });
+            } else if (gesture === 'fist') {
+                // 1. 让背景粒子也变成一个大爱心，氛围感拉满！
+                targetPositions = getHeartCoordinates();
+                
+                // 2. 照片爱心排布
+                const total = photoSprites.length;
+                photoSprites.forEach((sprite, i) => {
+                    const t = (i / total) * Math.PI * 2;
+                    // 标准爱心参数方程
+                    const x = 16 * Math.pow(Math.sin(t), 3); 
+                    const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                    
+                    sprite.userData.targetOpacity = 1; 
+                    // 【关键修复】：
+                    // 把系数从 2.5 提升到 6，撑大爱心轮廓，防止照片挤成一团。
+                    // Z轴加上错落的随机值 (Math.random() - 0.5) * 40，防止相邻照片互相穿模闪烁。
+                    sprite.userData.targetPos = new THREE.Vector3(x * 6, y * 6, (Math.random() - 0.5) * 40); 
+                });
+            }
+        }
+        
+        window.addEventListener('resize', () => { if(mapChart) mapChart.resize(); });
+    </script>
+</body>
+</html>

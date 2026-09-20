@@ -332,7 +332,7 @@
                 roadmapEl.appendChild(node);
             });
 
-            fetch('https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples/data/asset/geo/china.json')
+            fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
                 .then(response => response.json())
                 .then(geoJson => {
                     echarts.registerMap('china', geoJson);

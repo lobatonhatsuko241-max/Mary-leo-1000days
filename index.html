@@ -332,7 +332,7 @@
                 roadmapEl.appendChild(node);
             });
 
-            fetch('china.json')
+            fetch('https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/china.json')
                 .then(response => response.json())
                 .then(geoJson => {
                     echarts.registerMap('china', geoJson);

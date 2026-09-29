@@ -156,42 +156,30 @@
         .gesture-hint { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 15px 30px; border-radius: 30px; backdrop-filter: blur(10px); font-size: 1.1rem; text-align: center; pointer-events: none; z-index: 10; width: max-content; max-width: 90vw;}
         #video-element { position: absolute; bottom: 20px; right: 20px; width: 160px; height: 120px; border-radius: 10px; border: 2px solid #ffb7b2; transform: scaleX(-1); opacity: 0.5; pointer-events: none; z-index: 10; }
 
-
         /* ================= 📱 响应式设计 (手机端适配) 📱 ================= */
         @media screen and (max-width: 768px) {
-            /* 全局返回按钮 */
             .back-btn { top: 15px; right: 15px; font-size: 0.9rem; padding: 8px 15px; }
-            
-            /* 主页 */
             .home-title { font-size: 2.2rem; padding: 0 10px;}
             .portal-container { flex-direction: column; gap: 20px; margin-top: 20px;}
             .portal-card { width: 80vw; height: 100px; flex-direction: row; gap: 20px; border-radius: 20px;}
             .portal-icon { margin-bottom: 0; font-size: 2.5rem; }
             .portal-text { font-size: 1.1rem; }
-
-            /* Part 1: 地图UI缩放 */
             #ui-title { top: 60px; left: 15px; padding: 10px 15px; }
             .main-title { font-size: 1.3rem; }
             .sub-title { font-size: 0.9rem; }
             #ui-title p { font-size: 0.7rem !important; }
-            
             #roadmap-container { width: 92%; bottom: 15px; padding: 10px; }
             .road-node { min-width: 50px; }
             .road-name { font-size: 0.7rem; }
-            
             #memory-card { width: 90%; max-height: 80vh; }
             .card-header { padding: 15px 20px; }
             .city-title { font-size: 1.5rem; }
             .gallery-container { padding: 15px; gap: 10px; }
             .gallery-img { height: 25vh; }
             .memory-text { font-size: 1rem; padding: 0 20px 20px 20px; }
-
-            /* Part 2: 倒数日缩放 */
             #part2-screen h1 { font-size: 2rem; margin-top: 60px; margin-bottom: 20px;}
             .cd-card { width: 240px; padding: 30px 15px; margin-top: 25px; margin-bottom: 15px;}
             .cd-days { font-size: 2.8rem; }
-
-            /* Part 3: 粒子魔法缩放 */
             .gesture-hint { font-size: 0.85rem; padding: 10px 15px; bottom: 120px; }
             #video-element { width: 100px; height: 75px; bottom: 15px; right: 15px; }
         }
@@ -239,7 +227,6 @@
         </div>
 
         <div id="map-container"></div>
-
         <div id="roadmap-container"></div>
 
         <div id="memory-card">
@@ -323,7 +310,7 @@
         ];
 
         const memoriesData = {
-            "成都": { geo: [104.06, 30.65], img: ["月饼.jpg", "1第一张照片.jpg"], text: "刘哥说 元旦忘记和小马合影了 小马说 25年我们一定会多拍照；后来 收到明信片的小马 跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
+            "成都": { geo: [104.06, 30.65], img: ["月饼.jpg", "1第一张照片.jpg", "1第一张照片02.jpg"], text: "刘哥说 元旦忘记和小马合影了 小马说 25年我们一定会多拍照；后来 收到明信片的小马 也确实跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
             "都江堰": { geo: [103.62, 31.00], img: ["2都江堰01.jpg", "2都江堰02.jpg", "2都江堰03jpg.jpg"], text: "我们的第一次旅游 笑得很傻 但超级幸福" },
             "海洋馆": { geo: [104.09, 30.67], img: ["3海洋馆.jpg", "4海洋馆02.jpg", "5海洋馆03.jpg", "5海洋馆04.jpg", "5海洋馆05.jpg"], text: "谢谢海洋馆 烦恼都消散" },
             "毕棚沟": { geo: [102.82, 31.22], img: ["6毕棚沟.jpg", "6毕棚沟03.jpg", "毕棚沟02.jpg"], text: "千山原不老 为雪白头" },
@@ -359,7 +346,6 @@
                 roadmapEl.appendChild(node);
             });
 
-            // 【关键修复】使用无跨域限制的 jsdelivr CDN 链接，完美适配 Vercel
             fetch('https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/json/china.json')
                 .then(response => response.json())
                 .then(geoJson => {
@@ -593,6 +579,11 @@
                 
                 renderer.render(scene, camera);
             }
+
+            // 【关键修复：把丢失的 animate() 和 startMediaPipe() 补全】
+            animate();
+            startMediaPipe();
+        }
 
         function getCoordinatesForText(text) {
             const canvas = document.createElement('canvas');

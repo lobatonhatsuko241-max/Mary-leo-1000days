@@ -156,7 +156,7 @@
         .gesture-hint { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 15px 30px; border-radius: 30px; backdrop-filter: blur(10px); font-size: 1.1rem; text-align: center; pointer-events: none; z-index: 10; width: max-content; max-width: 90vw;}
         #video-element { position: absolute; bottom: 20px; right: 20px; width: 160px; height: 120px; border-radius: 10px; border: 2px solid #ffb7b2; transform: scaleX(-1); opacity: 0.5; pointer-events: none; z-index: 10; }
 
-        /* ================= 📱 响应式设计 (手机端适配) 📱 ================= */
+       /* ================= 📱 响应式设计 (手机端适配) 📱 ================= */
         @media screen and (max-width: 768px) {
             .back-btn { top: 15px; right: 15px; font-size: 0.9rem; padding: 8px 15px; }
             .home-title { font-size: 2.2rem; padding: 0 10px;}
@@ -171,12 +171,20 @@
             #roadmap-container { width: 92%; bottom: 15px; padding: 10px; }
             .road-node { min-width: 50px; }
             .road-name { font-size: 0.7rem; }
-            #memory-card { width: 90%; max-height: 80vh; }
+            
+            /* 【主要修复位置：弹窗上移，文字增加内滑动】 */
+            #memory-card { width: 92%; max-height: 75vh; top: 43%; } /* top从50%上移到43% */
             .card-header { padding: 15px 20px; }
             .city-title { font-size: 1.5rem; }
-            .gallery-container { padding: 15px; gap: 10px; }
-            .gallery-img { height: 25vh; }
-            .memory-text { font-size: 1rem; padding: 0 20px 20px 20px; }
+            .gallery-container { padding: 10px 15px; gap: 10px; }
+            .gallery-img { height: 22vh; } /* 稍微降低图片高度给文字让路 */
+            .memory-text { 
+                font-size: 1rem; 
+                padding: 10px 15px 25px 15px; 
+                overflow-y: auto; /* 如果文字很长，可以在这块区域内上下滑动 */
+                max-height: 25vh; /* 限制文字区域高度 */
+            }
+
             #part2-screen h1 { font-size: 2rem; margin-top: 60px; margin-bottom: 20px;}
             .cd-card { width: 240px; padding: 30px 15px; margin-top: 25px; margin-bottom: 15px;}
             .cd-days { font-size: 2.8rem; }
@@ -257,9 +265,9 @@
             </div>
             <div class="cd-card">
                 <div class="cd-avatar">💖</div>
-                <div class="cd-title">我们的纪念日</div>
+                <div class="cd-title">我们已经在一起</div>
                 <div class="cd-days" id="cd-anniv">--</div>
-                <div class="cd-date">1月5日</div>
+                <div class="cd-date">始于 2024年1月5日</div>
             </div>
             <div class="cd-card">
                 <div class="cd-avatar">👦🏻</div>
@@ -310,13 +318,13 @@
         ];
 
         const memoriesData = {
-            "成都": { geo: [104.06, 30.65], img: ["月饼.jpg", "1第一张照片.jpg"], text: "刘哥说 元旦忘记和小马合影了 小马说 25年我们一定会多拍照；后来 收到明信片的小马 也确实跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
+            "成都": { geo: [104.06, 30.65], img: ["月饼.jpg", "1第一张照片.jpg"], text: "刘哥说 元旦忘记和小马合影了 小马说 24年我们一定会多拍照；后来 收到明信片的小马 也确实跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
             "都江堰": { geo: [103.62, 31.00], img: ["2都江堰01.jpg", "2都江堰02.jpg", "2都江堰03jpg.jpg"], text: "我们的第一次旅游 笑得很傻 但超级幸福" },
             "海洋馆": { geo: [104.09, 30.67], img: ["3海洋馆.jpg", "4海洋馆02.jpg", "5海洋馆03.jpg", "5海洋馆04.jpg", "5海洋馆05.jpg"], text: "谢谢海洋馆 烦恼都消散" },
-            "毕棚沟": { geo: [102.82, 31.22], img: ["6毕棚沟.jpg", "6毕棚沟03.jpg", "毕棚沟02.jpg"], text: "千山原不老 为雪白头" },
-            "欢乐谷": { geo: [104.03, 30.72], img: ["7欢乐谷.jpg", "7欢乐谷02.jpg"], text: "“怎么就着了她的道呢”谢谢刘哥陪小马坐了n个过山车嘿嘿" },
+            "毕棚沟": { geo: [102.82, 31.22], img: ["6毕棚沟.jpg", "6毕棚沟03.jpg", "毕棚沟02.jpg"], text: "青山原不老 为雪白头" },
+            "欢乐谷": { geo: [104.03, 30.72], img: ["7欢乐谷.jpg", "7欢乐谷02.jpg", "7欢乐谷03.jpg", "7欢乐谷04.jpg"], text: "“怎么就着了她的道呢”谢谢刘哥陪小马坐了n个过山车嘿嘿" },
             "西安": { geo: [108.93, 34.34], img: ["8西安01.jpg", "9西安02.jpg", "9西安03.jpg", "9西安04.jpg"], text: "永远也忘不了在西安边工作边旅游到崩溃大哭 刘哥从无怨言非常体贴 想尽办法哄小马" },
-            "北京": { geo: [116.40, 39.90], img: ["10北京01.jpg", "10北京03.jpg", "11北京02.jpg", "11北京04.jpg", "11北京05.jpg", "11北京06.jpg", "19北京.jpg", "19北京03.jpg", "19北京023.jpg"], text: "魔法世界奇妙的一天，黄油啤酒留下了白胡子。" },
+            "北京": { geo: [116.40, 39.90], img: ["10北京01.jpg", "10北京03.jpg", "11北京02.jpg"], text: "魔法世界奇妙的一天，黄油啤酒留下了白胡子。" },
             "青城山": { geo: [103.58, 30.85], img: ["12青城山01.jpg", "12青城山02.jpg", "12青城山03.jpg", "12青城山04.jpg"], text: "嘿嘿我们的第二次青城山" },
             "划船": { geo: [104.06, 30.61], img: ["13划船.jpg"], text: "波光粼粼的兴隆湖 短暂忘记考雅思的烦恼 一起划着皮划艇看夕阳。" },
             "杭州": { geo: [120.15, 30.28], img: ["14杭州01.jpg", "14杭州02.jpg", "14杭州03.jpg", "14杭州05.jpg"], text: "江南水乡的温婉，捏着脸庞的可爱瞬间" },
@@ -560,7 +568,7 @@
                 
                 const positions = textParticles.geometry.attributes.position.array;
                 for(let i=0; i<PARTICLE_COUNT*3; i++) {
-                    positions[i] += (targetPositions[i] - positions[i]) * 0.15; 
+                    positions[i] += (targetPositions[i] - positions[i]) * 0.10; 
                 }
                 textParticles.geometry.attributes.position.needsUpdate = true;
                 textParticles.rotation.y = Math.sin(Date.now() * 0.0005) * 0.2; 

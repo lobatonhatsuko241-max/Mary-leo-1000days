@@ -198,7 +198,8 @@
     <!-- 入场券 -->
     <div id="entrance-screen">
         <div class="polaroid" onclick="startJourney()">
-            <img src="底图.jpg" alt="Our Ticket">
+            <!-- 修改这里 👇 -->
+            <img src="https://mary-leo.oss-cn-beijing.aliyuncs.com/compressed-images/底图-compressed.jpg" alt="Our Ticket">
             <div class="polaroid-text">Ticket to Our Universe</div>
         </div>
         <div class="click-hint">点击照片，开启记忆之旅 ✨</div>
@@ -317,24 +318,29 @@
             "青城山", "划船", "杭州", "南京", "九寨沟", "上海", "云南", "贵州", "山西", "济南"
         ];
 
+        const ossBase = "https://mary-leo.oss-cn-beijing.aliyuncs.com/compressed-images/";
+
+        // 统一处理图片链接的辅助函数，让代码看起来更清爽
+        const getOssUrl = (name) => `${ossBase}${name}-compressed.jpg`;
+
         const memoriesData = {
-            "成都": { geo: [104.06, 30.65], img: ["月饼.jpg", "1第一张照片.jpg"], text: "刘哥说 元旦忘记和小马合影了 小马说 24年我们一定会多拍照；后来 收到明信片的小马 也确实跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
-            "都江堰": { geo: [103.62, 31.00], img: ["2都江堰01.jpg", "2都江堰02.jpg", "2都江堰03jpg.jpg"], text: "我们的第一次旅游 笑得很傻 但超级幸福" },
-            "海洋馆": { geo: [104.09, 30.67], img: ["3海洋馆.jpg", "4海洋馆02.jpg", "5海洋馆03.jpg", "5海洋馆04.jpg", "5海洋馆05.jpg"], text: "谢谢海洋馆 烦恼都消散" },
-            "毕棚沟": { geo: [102.82, 31.22], img: ["6毕棚沟.jpg", "6毕棚沟03.jpg", "毕棚沟02.jpg"], text: "青山原不老 为雪白头" },
-            "欢乐谷": { geo: [104.03, 30.72], img: ["7欢乐谷.jpg", "7欢乐谷02.jpg", "7欢乐谷03.jpg", "7欢乐谷04.jpg"], text: "“怎么就着了她的道呢”谢谢刘哥陪小马坐了n个过山车嘿嘿" },
-            "西安": { geo: [108.93, 34.34], img: ["8西安01.jpg", "9西安02.jpg", "9西安03.jpg", "9西安04.jpg"], text: "永远也忘不了在西安边工作边旅游到崩溃大哭 刘哥从无怨言非常体贴 想尽办法哄小马" },
-            "北京": { geo: [116.40, 39.90], img: ["10北京01.jpg", "10北京03.jpg", "11北京02.jpg"], text: "魔法世界奇妙的一天，黄油啤酒留下了白胡子。" },
-            "青城山": { geo: [103.58, 30.85], img: ["12青城山01.jpg", "12青城山02.jpg", "12青城山03.jpg", "12青城山04.jpg"], text: "嘿嘿我们的第二次青城山" },
-            "划船": { geo: [104.06, 30.61], img: ["13划船.jpg"], text: "波光粼粼的兴隆湖 短暂忘记考雅思的烦恼 一起划着皮划艇看夕阳。" },
-            "杭州": { geo: [120.15, 30.28], img: ["14杭州01.jpg", "14杭州02.jpg", "14杭州03.jpg", "14杭州05.jpg"], text: "江南水乡的温婉，捏着脸庞的可爱瞬间" },
-            "南京": { geo: [118.79, 32.06], img: ["15南京01.jpg", "15南京04.jpg", "16南京02.jpg"], text: "可爱的猩猩玩偶陪着我们走过金陵城" },
-            "九寨沟": { geo: [103.92, 33.26], img: ["17九寨沟.jpg", "17九寨沟01.jpg", "17九寨沟02.jpg", "17九寨沟03.jpg"], text: "尘埃落定 去人间仙境" },
-            "上海": { geo: [121.47, 31.23], img: ["18上海.jpg", "18上海01.jpg", "18上海02.jpg", "18上海03.jpg"], text: "迪士尼的童话城堡前，刘哥满足了小马的满足了少女心" },
-            "云南": { geo: [102.71, 25.04], img: ["20云南01.jpg", "21云南02.jpg", "21云南03.jpg", "21云南04.jpg", "21云南05.jpg"], text: "彩云之南，4680雪山下的拥抱。" },
-            "贵州": { geo: [106.71, 26.57], img: ["22贵州01.jpg", "22贵州02.jpg"], text: "和好朋友的毕业trip 刘哥大显身手 开心果！！" },
-            "山西": { geo: [112.53, 37.87], img: ["23山西01.jpg", "23山西02.jpg", "23山西03.jpg", "23山西04.jpg"], text: "第一次见叔叔阿姨；call back明信片" },
-            "济南": { geo: [117.00, 36.65], img: ["24济南.jpg", "24济南01.jpg", "24济南02.jpg", "24济南03.jpg"], text: "星辰22岁生日快乐！希望星辰每一天都快乐！！" }
+            "成都": { geo: [104.06, 30.65], img: [getOssUrl("月饼"), getOssUrl("1第一张照片"), getOssUrl("1第一张照片02")], text: "刘哥说 元旦忘记和小马合影了 小马说 25年我们一定会多拍照；后来 收到明信片的小马 也确实跟着刘哥去了山西的五台山、云冈石窟和晋祠" },
+            "都江堰": { geo: [103.62, 31.00], img: [getOssUrl("2都江堰01"), getOssUrl("2都江堰02"), getOssUrl("2都江堰03jpg")], text: "我们的第一次旅游 笑得很傻 但超级幸福" },
+            "海洋馆": { geo: [104.09, 30.67], img: [getOssUrl("3海洋馆"), getOssUrl("4海洋馆02"), getOssUrl("5海洋馆03"), getOssUrl("5海洋馆04"), getOssUrl("5海洋馆05")], text: "谢谢海洋馆 烦恼都消散" },
+            "毕棚沟": { geo: [102.82, 31.22], img: [getOssUrl("6毕棚沟"), getOssUrl("6毕棚沟03"), getOssUrl("毕棚沟02")], text: "千山原不老 为雪白头" },
+            "欢乐谷": { geo: [104.03, 30.72], img: [getOssUrl("7欢乐谷"), getOssUrl("7欢乐谷02")], text: "“怎么就着了她的道呢”谢谢刘哥陪小马坐了n个过山车嘿嘿" },
+            "西安": { geo: [108.93, 34.34], img: [getOssUrl("8西安01"), getOssUrl("9西安02"), getOssUrl("9西安03"), getOssUrl("9西安04")], text: "永远也忘不了在西安边工作边旅游到崩溃大哭 刘哥从无怨言非常体贴 想尽办法哄小马" },
+            "北京": { geo: [116.40, 39.90], img: [getOssUrl("10北京01"), getOssUrl("10北京03"), getOssUrl("11北京02"), getOssUrl("11北京04"), getOssUrl("11北京05"), getOssUrl("11北京06"), getOssUrl("19北京"), getOssUrl("19北京03"), getOssUrl("19北京023")], text: "魔法世界奇妙的一天，黄油啤酒留下了白胡子。" },
+            "青城山": { geo: [103.58, 30.85], img: [getOssUrl("12青城山01"), getOssUrl("12青城山02"), getOssUrl("12青城山03"), getOssUrl("12青城山04")], text: "嘿嘿我们的第二次青城山" },
+            "划船": { geo: [104.06, 30.61], img: [getOssUrl("13划船")], text: "波光粼粼的兴隆湖 短暂忘记考雅思的烦恼 一起划着皮划艇看夕阳。" },
+            "杭州": { geo: [120.15, 30.28], img: [getOssUrl("14杭州01"), getOssUrl("14杭州02"), getOssUrl("14杭州03"), getOssUrl("14杭州05")], text: "江南水乡的温婉，捏着脸庞的可爱瞬间" },
+            "南京": { geo: [118.79, 32.06], img: [getOssUrl("15南京01"), getOssUrl("15南京04"), getOssUrl("16南京02")], text: "可爱的猩猩玩偶陪着我们走过金陵城" },
+            "九寨沟": { geo: [103.92, 33.26], img: [getOssUrl("17九寨沟"), getOssUrl("17九寨沟01"), getOssUrl("17九寨沟02"), getOssUrl("17九寨沟03")], text: "尘埃落定 去人间仙境" },
+            "上海": { geo: [121.47, 31.23], img: [getOssUrl("18上海"), getOssUrl("18上海01"), getOssUrl("18上海02"), getOssUrl("18上海03")], text: "迪士尼的童话城堡前，刘哥满足了小马的满足了少女心" },
+            "云南": { geo: [102.71, 25.04], img: [getOssUrl("20云南01"), getOssUrl("21云南02"), getOssUrl("21云南03"), getOssUrl("21云南04"), getOssUrl("21云南05")], text: "彩云之南，4680雪山下的拥抱。" },
+            "贵州": { geo: [106.71, 26.57], img: [getOssUrl("22贵州01"), getOssUrl("22贵州02")], text: "和好朋友的毕业trip 刘哥大显身手 开心果！！" },
+            "山西": { geo: [112.53, 37.87], img: [getOssUrl("23山西01"), getOssUrl("23山西02"), getOssUrl("23山西03"), getOssUrl("23山西04")], text: "第一次见叔叔阿姨；call back明信片" },
+            "济南": { geo: [117.00, 36.65], img: [getOssUrl("24济南"), getOssUrl("24济南01"), getOssUrl("24济南02"), getOssUrl("24济南03")], text: "星辰22岁生日快乐！希望星辰每一天都快乐！！" }
         };
 
         let currentStep = 0;

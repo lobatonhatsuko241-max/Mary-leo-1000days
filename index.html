@@ -514,7 +514,7 @@
             // 注意：JavaScript中月份是从0开始的，所以1月是0
             const startDate = new Date(2024, 0, 5); 
             // 计算相差天数（+1 表示把今天也算作在一起的一天，按需可去掉 +1）
-            const togetherDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            const togetherDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) ;
 
             // 3. 将数据写入页面
             document.getElementById('cd-ma').innerText = getDays(11, 19) + " 天";
